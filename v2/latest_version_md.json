@@ -1,0 +1,42 @@
+{
+  "code": 10000,
+  "version": "0.1.0",
+  "created_at": "2026-07-02",
+  "files": [
+    {
+      "file_name": "MartianLauncher-0.1.0.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0.apk",
+      "arch": "all"
+    },
+    {
+      "file_name": "MartianLauncher-0.1.0-arm.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-arm.apk",
+      "arch": "arm"
+    },
+    {
+      "file_name": "MartianLauncher-0.1.0-arm64.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-arm64.apk",
+      "arch": "arm64"
+    },
+    {
+      "file_name": "MartianLauncher-0.1.0-x86.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-x86.apk",
+      "arch": "x86"
+    },
+    {
+      "file_name": "MartianLauncher-0.1.0-x86_64.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-x86_64.apk",
+      "arch": "x86_64"
+    }
+  ],
+  "default_body": {
+    "language": "en",
+    "markdown": "## MartianLauncher v0.1.0\n\nInitial release by FoxStudio."
+  },
+  "bodies": [
+    {
+      "language": "vi",
+      "markdown": "## MartianLauncher v0.1.0\n\nPhiên bản đầu tiên của MartianLauncher bởi FoxStudio."
+    }
+  ]
+}
