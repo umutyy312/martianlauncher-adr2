@@ -56,7 +56,9 @@ import com.foxstudio.martianlauncher.ui.screens.content.download.DownloadModScre
 import com.foxstudio.martianlauncher.ui.screens.content.download.DownloadResourcePackScreen
 import com.foxstudio.martianlauncher.ui.screens.content.download.DownloadSavesScreen
 import com.foxstudio.martianlauncher.ui.screens.content.download.DownloadShadersScreen
+import com.foxstudio.martianlauncher.ui.screens.content.download.KeymapCommunityScreen
 import com.foxstudio.martianlauncher.ui.screens.content.download.assets.search.SearchIdScreen
+import com.foxstudio.martianlauncher.ui.screens.content.elements.CategoryIcon
 import com.foxstudio.martianlauncher.ui.screens.content.elements.CategoryIconColored
 import com.foxstudio.martianlauncher.ui.screens.content.elements.CategoryItem
 import com.foxstudio.martianlauncher.ui.screens.navigateOnce
@@ -150,6 +152,7 @@ private fun CategoryPills(
         CategoryItem(backScreenViewModel.downloadSavesScreen, { CategoryIconColored(R.drawable.ic_cat_saves, R.string.download_category_saves) }, R.string.download_category_saves),
         CategoryItem(backScreenViewModel.downloadShadersScreen, { CategoryIconColored(R.drawable.ic_cat_shaders, R.string.download_category_shaders) }, R.string.download_category_shaders),
         CategoryItem(NormalNavKey.SearchId, { CategoryIconColored(R.drawable.ic_cat_searchid, R.string.download_category_by_id) }, R.string.download_category_by_id),
+        CategoryItem(backScreenViewModel.downloadKeymapCommunityScreen, { CategoryIcon(R.drawable.ic_duo_multiplayer, R.string.community_title) }, R.string.community_title),
     )
 
     val yOffset by swapAnimateDpAsState(
@@ -304,6 +307,13 @@ private fun NavigationUI(
                         openLink = { link ->
                             eventViewModel.sendEvent(EventViewModel.Event.OpenLink(link))
                         }
+                    )
+                }
+                entry<NestedNavKey.DownloadKeymapCommunity> { key ->
+                    KeymapCommunityScreen(
+                        key = key,
+                        mainScreenKey = backScreenViewModel.mainScreen.currentKey,
+                        downloadScreenKey = backScreenViewModel.downloadScreen.currentKey
                     )
                 }
             }

@@ -439,6 +439,21 @@ object AllSettings : SettingsRegistry() {
      */
     val controlLayout = stringSetting("controlLayout", "")
 
+    /**
+     * 启用 ZalithLauncher 兼容的键盘映射模式
+     */
+    val zalithKeymapCompatMode = boolSetting("zalithKeymapCompatMode", false)
+
+    /**
+     * ZalithLauncher 兼容模式下的控制布局配置名
+     */
+    val zalithControlLayout = stringSetting("zalithControlLayout", "")
+
+    /**
+     * ZalithLauncher 兼容模式下的手柄映射配置名
+     */
+    val zalithGamepadMappingConfig = stringSetting("zalithGamepadMappingConfig", "default")
+
     //Other
     /**
      * 当前选择的账号

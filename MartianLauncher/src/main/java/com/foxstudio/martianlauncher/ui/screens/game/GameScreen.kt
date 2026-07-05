@@ -113,6 +113,8 @@ import com.foxstudio.martianlauncher.ui.control.gyroscope.isGyroscopeAvailable
 import com.foxstudio.martianlauncher.ui.control.hotbarPercentage
 import com.foxstudio.martianlauncher.ui.control.input.TextInputMode
 import com.foxstudio.martianlauncher.ui.control.joystick.JoystickDirectionListener
+import com.foxstudio.martianlauncher.ui.control.zalith.ZalithControlBoxLayout
+import com.foxstudio.martianlauncher.ui.control.zalith.ZalithControlEventDispatcher
 import com.foxstudio.martianlauncher.ui.control.joystick.StyleableJoystick
 import com.foxstudio.martianlauncher.ui.control.joystick.loadJoystickStyle
 import com.foxstudio.martianlauncher.ui.control.joystick.saveJoystickStyle
@@ -230,6 +232,35 @@ private class GameViewModel(
     /** 是否正在编辑布局 */
     var isEditingLayout by mutableStateOf(false)
         private set
+
+    /** ZalithLauncher 兼容模式：已加载的 Zalith 控制布局 */
+    var zalithLayout by mutableStateOf<com.foxstudio.martianlauncher.game.control.zalith.model.ZLCustomControls?>(null)
+        private set
+
+    /** ZalithLauncher 兼容模式：控件是否可见（对应 SPECIALBTN_TOGGLECTRL） */
+    var zalithControlsVisible by mutableStateOf(true)
+
+    fun toggleZalithControls() {
+        zalithControlsVisible = !zalithControlsVisible
+    }
+
+    /** 加载所选的 Zalith 控制布局（如未指定则取第一个） */
+    fun loadZalithLayout() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val layout = try {
+                val selectedName = com.foxstudio.martianlauncher.setting.AllSettings.zalithControlLayout.state
+                val files = com.foxstudio.martianlauncher.game.control.zalith.ZalithControlManager.list()
+                val file = files.firstOrNull { it.name == selectedName } ?: files.firstOrNull()
+                file?.let { com.foxstudio.martianlauncher.game.control.zalith.ZalithControlManager.load(it) }
+            } catch (e: Exception) {
+                Logger.warning(TAG, "Failed to load Zalith control layout", e)
+                null
+            }
+            withContext(Dispatchers.Main) {
+                zalithLayout = layout
+            }
+        }
+    }
 
     fun switchControlLayer(hideWhen: HideLayerWhen) {
         if (controlLayerHideState != hideWhen) controlLayerHideState = hideWhen
@@ -350,6 +381,13 @@ private class GameViewModel(
     }
 
     /**
+     * 呼出/关闭输入法（供 Zalith 兼容模式的特殊按键使用）
+     */
+    fun switchIme() {
+        onChangeTextInputMode(null)
+    }
+
+    /**
      * 清除所有游戏状态
      */
     fun clearState() {
@@ -365,6 +403,9 @@ private class GameViewModel(
         viewModelScope.launch(Dispatchers.Main) {
             loadControlLayout()
             launcherJoystickStyle = loadJoystickStyle(PathManager.DIR_STYLES)
+            if (com.foxstudio.martianlauncher.setting.AllSettings.zalithKeymapCompatMode.state) {
+                loadZalithLayout()
+            }
         }
     }
 
@@ -604,20 +645,10 @@ fun GameScreen(
                 )
             }
 
-            //控制布局层
-            ControlBoxLayout(
-                modifier = Modifier.fillMaxSize(),
-                observedLayout = viewModel.observableLayout,
-                eventHandler = viewModel.eventHandler,
-                checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
-                opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
-                markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
-                isUsingJoystick = isGrabbing && AllSettings.enableJoystickControl.state,
-                isCursorGrabbing = isGrabbing,
-                hideLayerWhen = viewModel.controlLayerHideState,
-                isDark = isLauncherInDarkTheme()
-            ) {
-                //虚拟鼠标控制层
+            val zalithMode = AllSettings.zalithKeymapCompatMode.state
+
+            //虚拟鼠标控制层（两种模式下都需要）
+            val mouseLayer: @Composable () -> Unit = {
                 MouseControlLayout(
                     isTouchProxyEnabled = isTouchProxyEnabled,
                     modifier = Modifier.fillMaxSize(),
@@ -635,6 +666,46 @@ fun GameScreen(
                     onTouch = { viewModel.switchControlLayer(HideLayerWhen.None) },
                     gamepadViewModel = gamepadViewModel.takeIf { AllSettings.gamepadControl.state }
                 )
+            }
+
+            if (zalithMode) {
+                //ZalithLauncher 兼容模式：使用独立的 Zalith 控制布局引擎
+                LaunchedEffect(Unit) {
+                    ZalithControlEventDispatcher.onSwitchMenu = { viewModel.switchMenu() }
+                    ZalithControlEventDispatcher.onSwitchKeyboard = { viewModel.switchIme() }
+                    ZalithControlEventDispatcher.onToggleControls = { viewModel.toggleZalithControls() }
+                    ZalithControlEventDispatcher.onToggleVirtualMouse = { viewModel.switchControlLayer(HideLayerWhen.None) }
+                }
+
+                mouseLayer()
+
+                viewModel.zalithLayout?.let { zLayout ->
+                    if (viewModel.zalithControlsVisible) {
+                        ZalithControlBoxLayout(
+                            layout = zLayout,
+                            isGrabbing = isGrabbing,
+                            screenWidthPx = screenSize.width,
+                            screenHeightPx = screenSize.height,
+                            globalOpacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f)
+                        )
+                    }
+                }
+            } else {
+                //控制布局层
+                ControlBoxLayout(
+                    modifier = Modifier.fillMaxSize(),
+                    observedLayout = viewModel.observableLayout,
+                    eventHandler = viewModel.eventHandler,
+                    checkOccupiedPointers = { viewModel.occupiedPointers.contains(it) },
+                    opacity = (AllSettings.controlsOpacity.state.toFloat() / 100f).coerceIn(0f, 1f),
+                    markPointerAsMoveOnly = { viewModel.moveOnlyPointers.add(it) },
+                    isUsingJoystick = isGrabbing && AllSettings.enableJoystickControl.state,
+                    isCursorGrabbing = isGrabbing,
+                    hideLayerWhen = viewModel.controlLayerHideState,
+                    isDark = isLauncherInDarkTheme()
+                ) {
+                    mouseLayer()
+                }
             }
 
             //物品栏触发层

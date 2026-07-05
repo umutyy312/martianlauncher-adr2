@@ -225,6 +225,10 @@ class EditorViewModel() : ViewModel() {
     /**
      * 保存控制布局
      */
+    fun packLayout(): ControlLayout? {
+        return if (::observableLayout.isInitialized) observableLayout.pack() else null
+    }
+
     fun save(
         targetFile: File,
         onSaved: () -> Unit

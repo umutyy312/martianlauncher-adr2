@@ -1067,6 +1067,7 @@ public class GLFW
                 glMajor = 4;
                 break;
             case "opengles3":
+            case "martian":
                 glMajor = 4;
                 glMinor = 0;
                 break;

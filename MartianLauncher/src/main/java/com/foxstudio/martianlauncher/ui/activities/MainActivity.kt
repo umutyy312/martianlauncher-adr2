@@ -44,6 +44,7 @@ import com.foxstudio.martianlauncher.context.COPY_LABEL_LINK
 import com.foxstudio.martianlauncher.coroutine.Task
 import com.foxstudio.martianlauncher.coroutine.TaskSystem
 import com.foxstudio.martianlauncher.game.control.ControlManager
+import com.foxstudio.martianlauncher.game.control.zalith.ZalithControlManager
 import com.foxstudio.martianlauncher.game.plugin.driver.DriverPluginManager
 import com.foxstudio.martianlauncher.game.version.installed.VersionsManager
 import com.foxstudio.martianlauncher.notification.NotificationManager
@@ -539,6 +540,45 @@ class MainActivity : BaseAppCompatActivity() {
                 )
             )
         }
+        //ZalithLauncher 兼容模式：将导入的文件按 Zalith 格式解析并单独存储
+        if (AllSettings.zalithKeymapCompatMode.state) {
+            TaskSystem.submitTask(
+                Task.runTask(
+                    dispatcher = Dispatchers.IO,
+                    task = {
+                        var done = false
+                        uris.forEach { uri ->
+                            val inputStream = contentResolver.openInputStream(uri) ?: run {
+                                showError(message = getString(R.string.multirt_runtime_import_failed_input_stream))
+                                return@forEach
+                            }
+                            try {
+                                inputStream.use { stream ->
+                                    ZalithControlManager.import(stream)
+                                }
+                                done = true
+                            } catch (e: Exception) {
+                                showError(
+                                    message = getString(R.string.control_manage_import_failed_to_parse) + "\n" +
+                                            e.getMessageOrToString()
+                                )
+                            }
+                        }
+                        if (done) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    getString(R.string.generic_done),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                )
+            )
+            return
+        }
+
         TaskSystem.submitTask(
             Task.runTask(
                 dispatcher = Dispatchers.IO,

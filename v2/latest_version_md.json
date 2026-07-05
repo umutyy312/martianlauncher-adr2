@@ -1,42 +1,42 @@
 {
-  "code": 10000,
-  "version": "0.1.0",
-  "created_at": "2026-07-02",
+  "code": 10002,
+  "version": "0.1.2",
+  "created_at": "2026-07-04",
   "files": [
     {
-      "file_name": "MartianLauncher-0.1.0.apk",
-      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0.apk",
+      "file_name": "MartianLauncher-0.1.2.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.2/MartianLauncher-0.1.2.apk",
       "arch": "all"
     },
     {
-      "file_name": "MartianLauncher-0.1.0-arm.apk",
-      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-arm.apk",
+      "file_name": "MartianLauncher-0.1.2-arm.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.2/MartianLauncher-0.1.2-arm.apk",
       "arch": "arm"
     },
     {
-      "file_name": "MartianLauncher-0.1.0-arm64.apk",
-      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-arm64.apk",
+      "file_name": "MartianLauncher-0.1.2-arm64.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.2/MartianLauncher-0.1.2-arm64.apk",
       "arch": "arm64"
     },
     {
-      "file_name": "MartianLauncher-0.1.0-x86.apk",
-      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-x86.apk",
+      "file_name": "MartianLauncher-0.1.2-x86.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.2/MartianLauncher-0.1.2-x86.apk",
       "arch": "x86"
     },
     {
-      "file_name": "MartianLauncher-0.1.0-x86_64.apk",
-      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.0/MartianLauncher-0.1.0-x86_64.apk",
+      "file_name": "MartianLauncher-0.1.2-x86_64.apk",
+      "uri": "https://github.com/foxstudio-201/martianlauncher-adr/releases/download/v0.1.2/MartianLauncher-0.1.2-x86_64.apk",
       "arch": "x86_64"
     }
   ],
   "default_body": {
     "language": "en",
-    "markdown": "## MartianLauncher v0.1.0\n\nInitial release by FoxStudio."
+    "markdown": "## MartianLauncher v0.1.2\n\n- Added Keymap Community upload dialog\n- Added Discord link in About\n- UI improvements"
   },
   "bodies": [
     {
       "language": "vi",
-      "markdown": "## MartianLauncher v0.1.0\n\nPhiên bản đầu tiên của MartianLauncher bởi FoxStudio."
+      "markdown": "## MartianLauncher v0.1.2\n\n- Thêm upload layout lên Keymap Community\n- Thêm liên kết Discord trong About\n- Cải thiện giao diện"
     }
   ]
 }

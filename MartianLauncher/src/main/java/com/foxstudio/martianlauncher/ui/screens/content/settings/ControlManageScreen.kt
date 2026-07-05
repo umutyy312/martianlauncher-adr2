@@ -18,6 +18,7 @@
 
 package com.foxstudio.martianlauncher.ui.screens.content.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.horizontalScroll
@@ -54,6 +55,7 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.scrollbar
 import androidx.compose.runtime.Composable
@@ -61,6 +63,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -98,9 +101,14 @@ import com.foxstudio.layer_controller.utils.saveToFile
 import com.foxstudio.martianlauncher.R
 import com.foxstudio.martianlauncher.game.control.ControlData
 import com.foxstudio.martianlauncher.game.control.ControlManager
+import com.foxstudio.martianlauncher.game.control.zalith.ZalithControlManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.foxstudio.martianlauncher.path.PathManager
 import com.foxstudio.martianlauncher.setting.AllSettings
 import com.foxstudio.martianlauncher.ui.activities.startEditorActivity
+import com.foxstudio.martianlauncher.ui.activities.startZalithEditorActivity
 import com.foxstudio.martianlauncher.ui.base.BaseScreen
 import com.foxstudio.martianlauncher.ui.components.AnimatedRow
 import com.foxstudio.martianlauncher.ui.components.BackgroundCard
@@ -131,10 +139,7 @@ import com.foxstudio.martianlauncher.utils.string.getMessageOrToString
 import com.foxstudio.martianlauncher.utils.string.isEmptyOrBlank
 import com.foxstudio.martianlauncher.viewmodel.ErrorViewModel
 import com.foxstudio.martianlauncher.viewmodel.EventViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.util.Locale
@@ -265,6 +270,7 @@ fun ControlManageScreen(
     ) { isVisible ->
         val selectedLayout by ControlManager.selectedLayout.collectAsStateWithLifecycle()
         val isRefreshing by ControlManager.isRefreshing.collectAsStateWithLifecycle()
+        val zalithMode = AllSettings.zalithKeymapCompatMode.state
 
         AnimatedRow(
             modifier = Modifier
@@ -304,29 +310,45 @@ fun ControlManageScreen(
             }
 
             AnimatedItem(scope) { xOffset ->
-                ControlLayoutInfo(
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .offset { IntOffset(x = xOffset.roundToPx(), y = 0) },
-                    isLoading = isRefreshing,
-                    data = selectedLayout,
-                    locale = locale,
-                    onShareLayout = { data ->
-                        shareFile(context, data.file)
-                    },
-                    onEditLayout = { data ->
-                        startEditorActivity(context, data.file)
-                    },
-                    onEditText = { data, string, type ->
-                        viewModel.operation = ControlOperation.EditText(data, string, type)
-                    },
-                    onEditDescription = { data ->
-                        viewModel.operation = ControlOperation.EditDescription(data)
-                    },
-                    onEditVersion = { data ->
-                        viewModel.operation = ControlOperation.EditVersion(data)
-                    }
-                )
+                val selectedZalithName = AllSettings.zalithControlLayout.state
+                val selectedZalithFile = if (zalithMode && selectedZalithName.isNotEmpty()) {
+                    ZalithControlManager.list().firstOrNull { it.name == selectedZalithName }
+                } else null
+
+                if (zalithMode && selectedZalithFile != null) {
+                    ZalithLayoutInfoPanel(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .offset { IntOffset(x = xOffset.roundToPx(), y = 0) },
+                        file = selectedZalithFile,
+                        onShare = { shareFile(context, selectedZalithFile) },
+                        onEdit = { startZalithEditorActivity(context, selectedZalithFile) }
+                    )
+                } else {
+                    ControlLayoutInfo(
+                        modifier = Modifier
+                            .weight(0.5f)
+                            .offset { IntOffset(x = xOffset.roundToPx(), y = 0) },
+                        isLoading = isRefreshing,
+                        data = if (!zalithMode) selectedLayout else null,
+                        locale = locale,
+                        onShareLayout = { data ->
+                            shareFile(context, data.file)
+                        },
+                        onEditLayout = { data ->
+                            startEditorActivity(context, data.file)
+                        },
+                        onEditText = { data, string, type ->
+                            viewModel.operation = ControlOperation.EditText(data, string, type)
+                        },
+                        onEditDescription = { data ->
+                            viewModel.operation = ControlOperation.EditDescription(data)
+                        },
+                        onEditVersion = { data ->
+                            viewModel.operation = ControlOperation.EditVersion(data)
+                        }
+                    )
+                }
             }
         }
     }
@@ -449,6 +471,8 @@ private fun ControlLayoutList(
     onDelete: (ControlData) -> Unit,
     eventViewModel: EventViewModel,
 ) {
+    val context = LocalContext.current
+    var zalithLayouts by remember { mutableStateOf(ZalithControlManager.list()) }
     BackgroundCard(
         modifier = modifier.fillMaxHeight(),
         shape = MaterialTheme.shapes.extraLarge
@@ -468,7 +492,8 @@ private fun ControlLayoutList(
                 eventViewModel = eventViewModel,
             )
 
-            if (dataList.isNotEmpty()) {
+            val hasAny = dataList.isNotEmpty() || zalithLayouts.isNotEmpty()
+            if (hasAny) {
                 val scrollState = rememberLazyListState()
                 LazyColumn(
                     modifier = Modifier
@@ -488,11 +513,39 @@ private fun ControlLayoutList(
                                 .padding(vertical = 6.dp),
                             data = data,
                             locale = locale,
-                            selected = data.file.name == AllSettings.controlLayout.state,
-                            onSelected = { ControlManager.selectControl(data) },
+                            selected = !AllSettings.zalithKeymapCompatMode.state &&
+                                data.file.name == AllSettings.controlLayout.state,
+                            onSelected = {
+                                AllSettings.zalithKeymapCompatMode.save(false)
+                                ControlManager.selectControl(data)
+                            },
                             onCopy = { onCopy(data) },
                             onDelete = { onDelete(data) }
                         )
+                    }
+
+                    if (zalithLayouts.isNotEmpty()) {
+                        items(zalithLayouts, key = { it.absolutePath }) { file ->
+                            ZalithLayoutItem(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 6.dp),
+                                file = file,
+                                selected = AllSettings.zalithKeymapCompatMode.state &&
+                                    file.name == AllSettings.zalithControlLayout.state,
+                                onSelected = {
+                                    AllSettings.zalithKeymapCompatMode.save(true)
+                                    AllSettings.zalithControlLayout.save(file.name)
+                                },
+                                onDelete = {
+                                    ZalithControlManager.delete(file)
+                                    if (AllSettings.zalithControlLayout.getValue() == file.name) {
+                                        AllSettings.zalithControlLayout.save("")
+                                    }
+                                    zalithLayouts = ZalithControlManager.list()
+                                }
+                            )
+                        }
                     }
                 }
             } else {
@@ -519,6 +572,7 @@ private fun ControlListHeader(
 ) {
     CardTitleLayout {
         val scrollState = rememberScrollState()
+        val zalithMode = AllSettings.zalithKeymapCompatMode.state
 
         Row(
             modifier = Modifier
@@ -552,6 +606,12 @@ private fun ControlListHeader(
                 painter = painterResource(R.drawable.ic_add_box_outlined),
                 contentDescription = stringResource(R.string.control_manage_create_new),
                 text = stringResource(R.string.control_manage_create_new),
+            )
+            Switch(
+                checked = zalithMode,
+                onCheckedChange = { checked ->
+                    AllSettings.zalithKeymapCompatMode.save(checked)
+                }
             )
         }
     }
@@ -1088,4 +1148,142 @@ private fun PreviewCreateNewLayoutDialog() {
         onDismissRequest = {},
         onCreate = { _, _, _ -> }
     )
+}
+
+@Composable
+private fun ZalithLayoutItem(
+    modifier: Modifier = Modifier,
+    file: File,
+    selected: Boolean,
+    onSelected: () -> Unit,
+    onDelete: () -> Unit,
+    color: Color = itemColor(),
+    contentColor: Color = onItemColor(),
+) {
+    val info = remember(file) {
+        runCatching {
+            val text = file.readText()
+            val root = com.google.gson.JsonParser.parseString(text).asJsonObject
+            Triple(
+                root.get("name")?.asString ?: "",
+                root.get("author")?.asString ?: "",
+                root.get("versionName")?.asString ?: ""
+            )
+        }.getOrNull() ?: Triple("", "", "")
+    }
+    val (name, author, versionName) = info
+    val scale = remember { Animatable(initialValue = 0.95f) }
+    LaunchedEffect(Unit) {
+        scale.animateTo(targetValue = 1f, animationSpec = getAnimateTween())
+    }
+    Surface(
+        modifier = modifier.graphicsLayer(scaleY = scale.value, scaleX = scale.value),
+        color = color,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.large,
+        onClick = { if (!selected) onSelected() }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = MaterialTheme.shapes.large)
+                .padding(all = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(
+                selected = selected,
+                onClick = { if (!selected) onSelected() }
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                MarqueeText(
+                    text = name.ifBlank { file.nameWithoutExtension },
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                MarqueeText(
+                    text = buildString {
+                        append(author.ifBlank { "Unknown" })
+                        if (versionName.isNotBlank()) {
+                            append(" v$versionName")
+                        }
+                    },
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete_outlined),
+                    contentDescription = stringResource(R.string.generic_delete)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZalithLayoutInfoPanel(
+    modifier: Modifier = Modifier,
+    file: File,
+    onShare: () -> Unit,
+    onEdit: () -> Unit
+) {
+    val info = remember(file) {
+        runCatching {
+            val text = file.readText()
+            val root = com.google.gson.JsonParser.parseString(text).asJsonObject
+            Triple(
+                root.get("name")?.asString ?: "",
+                root.get("author")?.asString ?: "",
+                root.get("versionName")?.asString ?: ""
+            )
+        }.getOrNull() ?: Triple("", "", "")
+    }
+    val (name, author, versionName) = info
+    BackgroundCard(
+        modifier = modifier.fillMaxHeight(),
+        shape = MaterialTheme.shapes.extraLarge
+    ) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(all = 12.dp)
+        ) {
+            item {
+                ControlInfoItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.control_manage_create_new_name),
+                    value = name.ifBlank { file.nameWithoutExtension },
+                    onEdit = {}
+                )
+            }
+            item {
+                ControlInfoItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.control_manage_create_new_author),
+                    value = author.ifBlank { "Unknown" },
+                    onEdit = {}
+                )
+            }
+            item {
+                ControlInfoItem(
+                    modifier = Modifier.fillMaxWidth(),
+                    title = stringResource(R.string.control_manage_create_new_version_name),
+                    value = versionName.ifBlank { "—" },
+                    onEdit = {}
+                )
+            }
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(all = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
+        ) {
+            ScalingActionButton(onClick = onShare) {
+                Text(stringResource(R.string.generic_share))
+            }
+            ScalingActionButton(onClick = onEdit) {
+                Text(stringResource(R.string.control_manage_info_edit))
+            }
+        }
+    }
 }

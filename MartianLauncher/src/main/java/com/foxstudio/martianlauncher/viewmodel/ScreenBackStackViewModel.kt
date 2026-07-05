@@ -43,6 +43,8 @@ class ScreenBackStackViewModel : ViewModel() {
     val downloadSavesScreen = NestedNavKey.DownloadSaves()
     /** 下载光影包屏幕 */
     val downloadShadersScreen = NestedNavKey.DownloadShaders()
+    /** 社区控制布局屏幕 */
+    val downloadKeymapCommunityScreen = NestedNavKey.DownloadKeymapCommunity()
 
     init {
         mainScreen.backStack.addIfEmpty(NormalNavKey.LauncherMain)

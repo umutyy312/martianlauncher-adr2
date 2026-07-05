@@ -125,6 +125,8 @@ fun AboutInfoScreen(
                             text = stringResource(R.string.about_launcher_author_movtery_text, BuildKeys.LAUNCHER_NAME),
                             openLink = { openLink("https://github.com/foxstudio-201") }
                         )
+
+                        DiscordItem(openLink = { openLink("https://discord.com/invite/AbQHGuPKen") })
                     }
                 }
             }
@@ -244,6 +246,60 @@ fun AboutInfoScreen(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+private const val DISCORD_ICON_URL = "https://cdn.simpleicons.org/discord"
+
+@Composable
+private fun DiscordItem(
+    modifier: Modifier = Modifier,
+    openLink: () -> Unit,
+    color: androidx.compose.ui.graphics.Color = itemColor(),
+    contentColor: androidx.compose.ui.graphics.Color = onItemColor(),
+) {
+    Surface(
+        modifier = modifier,
+        color = color,
+        contentColor = contentColor,
+        shape = MaterialTheme.shapes.large,
+        onClick = {}
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = DISCORD_ICON_URL,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(shape = RoundedCornerShape(6.dp)),
+                contentScale = ContentScale.Fit,
+                error = painterResource(R.drawable.ic_link)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Text(
+                    text = "Fox Universe",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                Text(
+                    modifier = Modifier.alpha(0.7f),
+                    text = "Join our Discord server!",
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Button(onClick = openLink) {
+                Text(text = "Join")
             }
         }
     }

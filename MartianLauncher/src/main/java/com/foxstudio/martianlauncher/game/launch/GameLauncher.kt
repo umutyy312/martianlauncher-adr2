@@ -374,7 +374,7 @@ private fun setRendererEnv(envMap: MutableMap<String, String>) {
 
     if (RendererPluginManager.selectedRendererPlugin != null) return
 
-    if (!rendererId.startsWith("opengles")) {
+    if (!rendererId.startsWith("opengles") && rendererId != "martian") {
         envMap["MESA_LOADER_DRIVER_OVERRIDE"] = "zink"
         envMap["MESA_GLSL_CACHE_DIR"] = PathManager.DIR_CACHE.absolutePath
         envMap["force_glsl_extensions_warn"] = "true"

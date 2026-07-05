@@ -30,6 +30,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.foxstudio.layer_controller.layout.ControlLayout
 import com.foxstudio.layer_controller.layout.loadLayoutFromFile
+import com.foxstudio.martianlauncher.game.control.zalith.ZalithControlManager
+import com.foxstudio.martianlauncher.game.control.zalith.toMartianLayout
+import com.foxstudio.martianlauncher.game.control.zalith.toZalithControls
 import com.foxstudio.martianlauncher.setting.AllSettings
 import com.foxstudio.martianlauncher.ui.base.BaseAppCompatActivity
 import com.foxstudio.martianlauncher.ui.base.applyFullscreen
@@ -44,33 +47,35 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
 private const val BUNDLE_CONTROL = "BUNDLE_CONTROL"
+private const val BUNDLE_IS_ZALITH = "BUNDLE_IS_ZALITH"
 
 @AndroidEntryPoint
 class ControlEditorActivity : BaseAppCompatActivity() {
-    /** 编辑器 */
     private val editorViewModel: EditorViewModel by viewModels()
-
-    /**
-     * 启动器背景内容管理 ViewModel
-     */
     private val backgroundViewModel: BackgroundViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /** 控制布局绝对路径 */
         val controlPath: String = intent.extras?.getString(BUNDLE_CONTROL) ?: return runFinish()
-        /** 控制布局文件 */
+        val isZalith: Boolean = intent.extras?.getBoolean(BUNDLE_IS_ZALITH, false) ?: false
         val controlFile: File = File(controlPath).takeIf { it.isFile && it.exists() } ?: return runFinish()
-        /** 控制布局 */
-        val layout: ControlLayout = runCatching {
-            loadLayoutFromFile(controlFile)
-        }.getOrNull() ?: return runFinish()
 
-        //初始化控制布局
+        val layout: ControlLayout = if (isZalith) {
+            runCatching {
+                val zlControls = ZalithControlManager.load(controlFile)
+                zlControls.toMartianLayout(
+                    name = controlFile.nameWithoutExtension,
+                    screenWidthPx = resources.displayMetrics.widthPixels,
+                    screenHeightPx = resources.displayMetrics.heightPixels,
+                    density = resources.displayMetrics.density
+                )
+            }.getOrNull() ?: return runFinish()
+        } else {
+            runCatching { loadLayoutFromFile(controlFile) }.getOrNull() ?: return runFinish()
+        }
+
         editorViewModel.initLayout(layout)
 
-        //绑定返回键按下事件，防止直接退出导致控制布局丢失所有变更
-        //提醒用户保存并退出
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 editorViewModel.onBackPressed(context = this@ControlEditorActivity) {
@@ -80,17 +85,14 @@ class ControlEditorActivity : BaseAppCompatActivity() {
         })
 
         setContent {
-            MartianLauncherTheme(
-                backgroundViewModel = backgroundViewModel
-            ) {
+            MartianLauncherTheme(backgroundViewModel = backgroundViewModel) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = backgroundColor(),
                     contentColor = onBackgroundColor()
                 ) {
                     BoxWithConstraints(
-                        modifier = Modifier
-                            .applyFullscreen(AllSettings.launcherFullScreen.state)
+                        modifier = Modifier.applyFullscreen(AllSettings.launcherFullScreen.state)
                     ) {
                         Background(
                             modifier = Modifier.fillMaxSize(),
@@ -102,16 +104,13 @@ class ControlEditorActivity : BaseAppCompatActivity() {
                             viewModel = editorViewModel,
                             targetFile = controlFile,
                             exit = {
-                                //已保存控制布局后进行的退出
+                                if (isZalith) saveZalithLayout(controlFile)
                                 finish()
                             },
                             menuExit = {
-                                //菜单要求的直接退出，使用对话框让用户确认
                                 editorViewModel.showExitEditorDialog(
                                     context = this@ControlEditorActivity,
-                                    onExit = {
-                                        this@ControlEditorActivity.finish()
-                                    }
+                                    onExit = { finish() }
                                 )
                             }
                         )
@@ -120,14 +119,31 @@ class ControlEditorActivity : BaseAppCompatActivity() {
             }
         }
     }
+
+    private fun saveZalithLayout(originalFile: File) {
+        runCatching {
+            val martianLayout = editorViewModel.packLayout() ?: return
+            val zlControls = martianLayout.toZalithControls(
+                screenWidthPx = resources.displayMetrics.widthPixels,
+                screenHeightPx = resources.displayMetrics.heightPixels,
+                density = resources.displayMetrics.density
+            )
+            ZalithControlManager.saveLayout(zlControls, originalFile)
+        }
+    }
 }
 
-/**
- * 开启控制布局编辑器
- */
 fun startEditorActivity(context: Context, file: File) {
     val intent = Intent(context, ControlEditorActivity::class.java).apply {
         putExtra(BUNDLE_CONTROL, file.absolutePath)
+    }
+    context.startActivity(intent)
+}
+
+fun startZalithEditorActivity(context: Context, file: File) {
+    val intent = Intent(context, ControlEditorActivity::class.java).apply {
+        putExtra(BUNDLE_CONTROL, file.absolutePath)
+        putExtra(BUNDLE_IS_ZALITH, true)
     }
     context.startActivity(intent)
 }

@@ -81,4 +81,8 @@ sealed interface NestedNavKey {
     @Serializable class DownloadShaders : BackStackNavKey<TitledNavKey>(
         R.string.download_category_shaders
     )
+    /** 社区控制布局屏幕 */
+    @Serializable class DownloadKeymapCommunity : BackStackNavKey<TitledNavKey>(
+        R.string.community_title
+    )
 }

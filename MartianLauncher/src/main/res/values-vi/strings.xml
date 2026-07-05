@@ -1234,4 +1234,13 @@
     <string name="vibrate_kind_tick">Chọn</string>
     <string name="festivals_new_year">Chúc mừng năm mới!</string>
     <string name="festivals_april_fools">Chúc mừng ngày Cá tháng Tư!</string>
+    <string name="community_title">Cộng đồng Layout</string>
+    <string name="community_search_hint">Tìm kiếm layout...</string>
+    <string name="community_empty">Chưa có layout nào</string>
+    <string name="community_download">Tải về</string>
+    <string name="community_downloaded">Đã tải</string>
+    <string name="community_download_success">Đã tải layout "%1$s"</string>
+    <string name="community_download_failed">Tải thất bại: %1$s</string>
+    <string name="community_no_json">Layout này không có dữ liệu JSON</string>
+    <string name="community_page">Trang %1$d / %2$d</string>
 </resources>

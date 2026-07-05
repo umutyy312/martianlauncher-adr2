@@ -21,6 +21,8 @@ package com.foxstudio.martianlauncher.game.renderer
 import android.content.Context
 import com.foxstudio.martianlauncher.game.renderer.renderers.FreedrenoRenderer
 import com.foxstudio.martianlauncher.game.renderer.renderers.GL4ESRenderer
+import com.foxstudio.martianlauncher.game.renderer.renderers.LTWRenderer
+import com.foxstudio.martianlauncher.game.renderer.renderers.MartianRenderer
 import com.foxstudio.martianlauncher.game.renderer.renderers.NGGL4ESRenderer
 import com.foxstudio.martianlauncher.game.renderer.renderers.PanfrostRenderer
 import com.foxstudio.martianlauncher.game.renderer.renderers.VirGLRenderer
@@ -55,6 +57,8 @@ object Renderers {
         addRenderers(
             NGGL4ESRenderer,
             GL4ESRenderer,
+            LTWRenderer,
+            MartianRenderer,
             VulkanZinkRenderer,
             VirGLRenderer,
             FreedrenoRenderer,
