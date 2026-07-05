@@ -94,12 +94,15 @@ fun formatDate(
         Logger.warning(TAG, "Encountered an illegal format string while initializing time string formatting: $pattern", e)
         DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN)
     }
+    val zonedDateTime = try {
+        OffsetDateTime.parse(input).toZonedDateTime()
+    } catch (e: DateTimeParseException) {
+        LocalDate.parse(input).atStartOfDay(zoneId)
+    }
     return formatter
         .withLocale(locale)
         .withZone(zoneId)
-        .format(
-        OffsetDateTime.parse(input).toZonedDateTime()
-    )
+        .format(zonedDateTime)
 }
 
 /**
