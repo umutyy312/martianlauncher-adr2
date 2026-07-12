@@ -376,9 +376,9 @@ private fun ActionsLayout(
     }
 ) {
     MarqueeText(text = "Yggdrasil Giriş") 
-}
-          
-        
+} 
+   } // Column kapanışı
+} // ActionsLayout kapanışı         
 
 @Composable
 private fun LoginMenuOperation(
