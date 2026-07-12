@@ -270,7 +270,7 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
 } 
 tasks.configureEach {
-    if (name.startsWith("merge") && name.endsWith("Assets")) {
+    if (name.contains("Assets") || name.contains("LintReportModel")) {
         dependsOn(":LWJGL:jar")
     }
 }
