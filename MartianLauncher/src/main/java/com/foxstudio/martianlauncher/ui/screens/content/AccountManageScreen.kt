@@ -365,7 +365,19 @@ private fun ActionsLayout(
         ) {
             MarqueeText(text = stringResource(R.string.account_add_new_account))
         }
-    }
+            ScalingActionButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                actions.onIntent(
+                    AccountManageIntent.UpdateLoginMenuOp(
+                        LoginMenuOperation.Login
+                    )
+                )
+            }
+        ) {
+            MarqueeText(text = "Yggdrasil Giriş")
+        }
+    }       
 }
 
 @Composable
