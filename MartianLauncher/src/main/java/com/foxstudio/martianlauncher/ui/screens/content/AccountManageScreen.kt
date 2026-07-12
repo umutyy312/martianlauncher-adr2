@@ -365,20 +365,18 @@ private fun ActionsLayout(
         ) {
             MarqueeText(text = stringResource(R.string.account_add_new_account))
         }
-            ScalingActionButton(
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                actions.onIntent(
-                    AccountManageIntent.UpdateLoginMenuOp(
-                        LoginMenuOperation.Login
-                    )
-                )
-            }
-        ) {
-            MarqueeText(text = "Yggdrasil Giriş")
-        }
-    }       
-}
+          ScalingActionButton(
+    modifier = Modifier.fillMaxWidth(),
+    onClick = {
+        actions.onIntent(
+            AccountManageIntent.UpdateServerOp(
+                ServerOperation.AddNew
+            )
+        )
+    }
+) {
+    MarqueeText(text = "Yggdrasil Giriş")
+          }
 
 @Composable
 private fun LoginMenuOperation(
