@@ -269,8 +269,10 @@ dependencies {
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
 } 
-tasks.configureEach {
-    if (name.contains("Assets") || name.contains("LintReportModel")) {
+  tasks.configureEach {
+    if (name.contains("Assets") ||
+        name.contains("LintReportModel") ||
+        name.contains("lintAnalyze")) {
         dependsOn(":LWJGL:jar")
     }
 }
